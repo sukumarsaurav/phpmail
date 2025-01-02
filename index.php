@@ -158,37 +158,39 @@ session_start();
             <span class="close" onclick="closeNewTemplateModal()">&times;</span>
             <h2><i class="fas fa-file-code"></i> Create New Template</h2>
             <div class="template-editor-container">
-                <!-- Editor Section -->
                 <div class="editor-section">
                     <form action="templates/manage_templates.php" method="post" class="template-form" id="templateForm">
-                        <div class="field-group">
+                        <div class="field-group template-name-group">
                             <label>Template Name:
                                 <input type="text" name="template_name" required>
                             </label>
                         </div>
-                        <div class="field-group">
-                            <label>HTML Content:</label>
-                            <textarea name="template_content" id="templateEditor" rows="20" required 
-                                oninput="updatePreview(this.value)"></textarea>
-                        </div>
-                        <div class="template-variables">
-                            <p>Available variables: 
-                                <span class="variable-tag" onclick="insertVariable('{name}')">{name}</span>
-                                <span class="variable-tag" onclick="insertVariable('{email}')">{email}</span>
-                            </p>
+                        <div class="editor-preview-container">
+                            <!-- Code Editor -->
+                            <div class="code-editor-section">
+                                <label>HTML Code:</label>
+                                <textarea name="template_content" id="templateEditor" required 
+                                    oninput="updatePreview(this.value)"></textarea>
+                                <div class="template-variables">
+                                    <p>Available variables: 
+                                        <span class="variable-tag" onclick="insertVariable('{name}')">{name}</span>
+                                        <span class="variable-tag" onclick="insertVariable('{email}')">{email}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <!-- Live Preview -->
+                            <div class="preview-section">
+                                <label>Live Preview:</label>
+                                <div class="preview-frame-container">
+                                    <iframe id="previewFrame" class="template-preview-frame"></iframe>
+                                </div>
+                            </div>
                         </div>
                         <button type="submit" class="save-template-button">
                             <i class="fas fa-save"></i> Save Template
                         </button>
                     </form>
-                </div>
-                
-                <!-- Preview Section -->
-                <div class="preview-section">
-                    <h3><i class="fas fa-eye"></i> Live Preview</h3>
-                    <div class="preview-frame-container">
-                        <iframe id="previewFrame" class="template-preview-frame"></iframe>
-                    </div>
                 </div>
             </div>
         </div>
