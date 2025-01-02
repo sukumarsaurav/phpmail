@@ -86,21 +86,34 @@ session_start();
                 <!-- Template Selection -->
                 <div class="template-section">
                     <h2><i class="fas fa-file-code"></i> Email Template</h2>
-                    <div class="template-grid">
+                    <div class="existing-templates-grid">
                         <?php
                         $templates = glob('templates/*.html');
                         foreach($templates as $template) {
                             $name = basename($template);
                             $content = file_get_contents($template);
-                            echo "<div class='template-card' onclick='selectTemplate(this, \"$name\")'>";
-                            echo "<div class='template-preview'>" . substr(strip_tags($content), 0, 100) . "...</div>";
-                            echo "<div class='template-name'>$name</div>";
+                            echo "<div class='existing-template-card'>";
+                            echo "<div class='template-preview-header'>";
+                            echo "<h3>$name</h3>";
+                            echo "</div>";
+                            echo "<div class='template-preview-content'>";
+                            echo "<iframe srcdoc='" . htmlspecialchars($content, ENT_QUOTES) . "' 
+                                    style='width: 100%; height: 100%; border: none;'></iframe>";
+                            echo "</div>";
+                            echo "<div class='template-preview-actions'>";
+                            echo "<button class='use-template' onclick='selectTemplate(this.closest(\".existing-template-card\"), \"$name\")'>";
+                            echo "<i class='fas fa-check'></i> Use Template</button>";
+                            echo "<button class='edit-template' onclick='editTemplate(\"$name\", `" . htmlspecialchars($content, ENT_QUOTES) . "`)'>";
+                            echo "<i class='fas fa-edit'></i> Edit</button>";
+                            echo "</div>";
                             echo "</div>";
                         }
                         ?>
-                        <div class="template-card add-template" onclick="showNewTemplateModal()">
-                            <i class="fas fa-plus"></i>
-                            <div>Add New Template</div>
+                        <div class="existing-template-card add-template" onclick="showNewTemplateModal()">
+                            <div class="add-template-content">
+                                <i class="fas fa-plus"></i>
+                                <div>Add New Template</div>
+                            </div>
                         </div>
                     </div>
                     <input type="hidden" name="template" id="selected-template" required>
@@ -141,27 +154,43 @@ session_start();
 
     <!-- New Template Modal -->
     <div id="newTemplateModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content template-editor-content">
             <span class="close" onclick="closeNewTemplateModal()">&times;</span>
             <h2><i class="fas fa-file-code"></i> Create New Template</h2>
-            <form action="templates/manage_templates.php" method="post" class="template-form">
-                <div class="field-group">
-                    <label>Template Name:
-                        <input type="text" name="template_name" required>
-                    </label>
+            <div class="template-editor-container">
+                <!-- Editor Section -->
+                <div class="editor-section">
+                    <form action="templates/manage_templates.php" method="post" class="template-form" id="templateForm">
+                        <div class="field-group">
+                            <label>Template Name:
+                                <input type="text" name="template_name" required>
+                            </label>
+                        </div>
+                        <div class="field-group">
+                            <label>HTML Content:</label>
+                            <textarea name="template_content" id="templateEditor" rows="20" required 
+                                oninput="updatePreview(this.value)"></textarea>
+                        </div>
+                        <div class="template-variables">
+                            <p>Available variables: 
+                                <span class="variable-tag" onclick="insertVariable('{name}')">{name}</span>
+                                <span class="variable-tag" onclick="insertVariable('{email}')">{email}</span>
+                            </p>
+                        </div>
+                        <button type="submit" class="save-template-button">
+                            <i class="fas fa-save"></i> Save Template
+                        </button>
+                    </form>
                 </div>
-                <div class="field-group">
-                    <label>Content:
-                        <textarea name="template_content" rows="10" required></textarea>
-                    </label>
+                
+                <!-- Preview Section -->
+                <div class="preview-section">
+                    <h3><i class="fas fa-eye"></i> Live Preview</h3>
+                    <div class="preview-frame-container">
+                        <iframe id="previewFrame" class="template-preview-frame"></iframe>
+                    </div>
                 </div>
-                <div class="template-variables">
-                    <p>Available variables: {name}, {email}</p>
-                </div>
-                <button type="submit" class="save-template-button">
-                    <i class="fas fa-save"></i> Save Template
-                </button>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -183,6 +212,35 @@ session_start();
     // New template modal
     function showNewTemplateModal() {
         document.getElementById('newTemplateModal').style.display = 'block';
+        // Add default template structure
+        const defaultTemplate = `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; }
+        .email-container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .content { background: #fff; padding: 20px; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Welcome {name}!</h1>
+        </div>
+        <div class="content">
+            <p>Your content here...</p>
+        </div>
+        <div class="footer">
+            <p>Your company name | Address | Contact</p>
+        </div>
+    </div>
+</body>
+</html>`;
+        
+        document.getElementById('templateEditor').value = defaultTemplate;
+        updatePreview(defaultTemplate);
     }
 
     function closeNewTemplateModal() {
@@ -227,6 +285,29 @@ session_start();
                     window.location.reload();
                 }
             });
+    }
+
+    function updatePreview(htmlContent) {
+        const frame = document.getElementById('previewFrame');
+        const preview = frame.contentDocument || frame.contentWindow.document;
+        preview.open();
+        preview.write(htmlContent);
+        preview.close();
+    }
+
+    function insertVariable(variable) {
+        const editor = document.getElementById('templateEditor');
+        const cursorPos = editor.selectionStart;
+        const textBefore = editor.value.substring(0, cursorPos);
+        const textAfter = editor.value.substring(cursorPos);
+        
+        editor.value = textBefore + variable + textAfter;
+        updatePreview(editor.value);
+        
+        // Reset cursor position after variable
+        editor.focus();
+        const newCursorPos = cursorPos + variable.length;
+        editor.setSelectionRange(newCursorPos, newCursorPos);
     }
     </script>
 </body>
