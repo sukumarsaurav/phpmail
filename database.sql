@@ -26,4 +26,17 @@ CREATE TABLE email_lists (
     stored_filename VARCHAR(255) NOT NULL,
     uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE sent_emails (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    template_id INT NOT NULL,
+    list_id INT NOT NULL,
+    recipient_count INT NOT NULL,
+    status ENUM('pending', 'completed', 'failed') NOT NULL DEFAULT 'pending',
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (template_id) REFERENCES templates(id),
+    FOREIGN KEY (list_id) REFERENCES email_lists(id)
 ); 

@@ -8,10 +8,6 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Get user information
-$stmt = $pdo->prepare("SELECT username, email FROM users WHERE id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
 ?>
 <!DOCTYPE html>
 <html>
@@ -21,36 +17,7 @@ $user = $stmt->fetch();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2><i class="fas fa-envelope"></i> Email Sender</h2>
-        </div>
-        <ul class="nav-menu">
-            <li class="nav-item active">
-                <i class="fas fa-home"></i> Dashboard
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-file-upload"></i> Upload List
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-file-code"></i> Templates
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-history"></i> History
-            </li>
-            <li class="nav-item">
-                <i class="fas fa-cog"></i> Settings
-            </li>
-        </ul>
-        <div class="user-info">
-            <p><i class="fas fa-user"></i> <?php echo htmlspecialchars($user['username']); ?></p>
-            <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['email']); ?></p>
-            <a href="logout.php" class="logout-btn">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </div>
-    </div>
+    <?php include 'includes/sidebar.php'; ?>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -78,17 +45,17 @@ $user = $stmt->fetch();
                 <h2><i class="fas fa-history"></i> Previous Uploads</h2>
                 <div class="uploads-grid">
                     <?php
-                    $uploads = glob('uploads/*_{*.csv,*.xlsx,*.xls}', GLOB_BRACE);
-                    foreach($uploads as $upload) {
-                        $filename = basename($upload);
-                        $timestamp = strtotime(explode('_', $filename)[0]);
-                        $original_name = implode('_', array_slice(explode('_', $filename), 1));
+                    $stmt = $pdo->prepare("SELECT * FROM email_lists WHERE user_id = ? ORDER BY uploaded_at DESC");
+                    $stmt->execute([$_SESSION['user_id']]);
+                    $email_lists = $stmt->fetchAll();
+                    
+                    foreach($email_lists as $list) {
                         echo "<div class='upload-card'>";
                         echo "<div class='upload-icon'><i class='fas fa-file-alt'></i></div>";
                         echo "<div class='upload-details'>";
-                        echo "<h3>$original_name</h3>";
-                        echo "<p>Uploaded: " . date('Y-m-d H:i', $timestamp) . "</p>";
-                        echo "<button class='use-file' onclick='useFile(\"$filename\")'>Use This File</button>";
+                        echo "<h3>" . htmlspecialchars($list['original_filename']) . "</h3>";
+                        echo "<p>Uploaded: " . date('Y-m-d H:i', strtotime($list['uploaded_at'])) . "</p>";
+                        echo "<button class='use-file' onclick='useFile(\"" . htmlspecialchars($list['stored_filename']) . "\")'>Use This File</button>";
                         echo "</div>";
                         echo "</div>";
                     }
