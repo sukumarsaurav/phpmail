@@ -1,5 +1,17 @@
 <?php
 session_start();
+require_once 'config/database.php';
+
+// Redirect to login if not authenticated
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php');
+    exit;
+}
+
+// Get user information
+$stmt = $pdo->prepare("SELECT username, email FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch();
 ?>
 <!DOCTYPE html>
 <html>
@@ -9,138 +21,174 @@ session_start();
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1 class="main-title"><i class="fas fa-envelope"></i> Bulk Email Sender</h1>
-        
-        <!-- File Upload Form -->
-        <div class="card upload-section">
-            <h2><i class="fas fa-file-upload"></i> Upload Email List</h2>
-            <form action="upload.php" method="post" enctype="multipart/form-data">
-                <div class="file-input-container">
-                    <input type="file" name="file" id="file" accept=".csv,.xlsx,.xls" required>
-                    <label for="file" class="file-label">
-                        <i class="fas fa-cloud-upload-alt"></i> Choose File
-                    </label>
-                    <span id="file-name">No file chosen</span>
-                </div>
-                <button type="submit" class="upload-button"><i class="fas fa-upload"></i> Upload</button>
-            </form>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-envelope"></i> Email Sender</h2>
         </div>
+        <ul class="nav-menu">
+            <li class="nav-item active">
+                <i class="fas fa-home"></i> Dashboard
+            </li>
+            <li class="nav-item">
+                <i class="fas fa-file-upload"></i> Upload List
+            </li>
+            <li class="nav-item">
+                <i class="fas fa-file-code"></i> Templates
+            </li>
+            <li class="nav-item">
+                <i class="fas fa-history"></i> History
+            </li>
+            <li class="nav-item">
+                <i class="fas fa-cog"></i> Settings
+            </li>
+        </ul>
+        <div class="user-info">
+            <p><i class="fas fa-user"></i> <?php echo htmlspecialchars($user['username']); ?></p>
+            <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user['email']); ?></p>
+            <a href="logout.php" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
 
-        <!-- Previous Uploads -->
-        <div class="card previous-uploads">
-            <h2><i class="fas fa-history"></i> Previous Uploads</h2>
-            <div class="uploads-grid">
-                <?php
-                $uploads = glob('uploads/*_{*.csv,*.xlsx,*.xls}', GLOB_BRACE);
-                foreach($uploads as $upload) {
-                    $filename = basename($upload);
-                    $timestamp = strtotime(explode('_', $filename)[0]);
-                    $original_name = implode('_', array_slice(explode('_', $filename), 1));
-                    echo "<div class='upload-card'>";
-                    echo "<div class='upload-icon'><i class='fas fa-file-alt'></i></div>";
-                    echo "<div class='upload-details'>";
-                    echo "<h3>$original_name</h3>";
-                    echo "<p>Uploaded: " . date('Y-m-d H:i', $timestamp) . "</p>";
-                    echo "<button class='use-file' onclick='useFile(\"$filename\")'>Use This File</button>";
-                    echo "</div>";
-                    echo "</div>";
-                }
-                ?>
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Existing content from your index.php goes here -->
+        <div class="container">
+            <h1 class="main-title"><i class="fas fa-envelope"></i> Bulk Email Sender</h1>
+            
+            <!-- File Upload Form -->
+            <div class="card upload-section">
+                <h2><i class="fas fa-file-upload"></i> Upload Email List</h2>
+                <form action="upload.php" method="post" enctype="multipart/form-data">
+                    <div class="file-input-container">
+                        <input type="file" name="file" id="file" accept=".csv,.xlsx,.xls" required>
+                        <label for="file" class="file-label">
+                            <i class="fas fa-cloud-upload-alt"></i> Choose File
+                        </label>
+                        <span id="file-name">No file chosen</span>
+                    </div>
+                    <button type="submit" class="upload-button"><i class="fas fa-upload"></i> Upload</button>
+                </form>
             </div>
-        </div>
 
-        <!-- Column Mapping Section -->
-        <?php if(isset($_SESSION['file_data'])): ?>
-        <div class="card mapping-section">
-            <h2><i class="fas fa-columns"></i> Map Columns</h2>
-            <form action="send_mail.php" method="post" id="emailForm">
-                <div class="mapping-fields">
-                    <div class="field-group">
-                        <label>
-                            <i class="fas fa-envelope"></i> Email Column:
-                            <select name="email_column" required>
-                                <?php
-                                foreach($_SESSION['headers'] as $index => $header) {
-                                    echo "<option value='$index'>$header</option>";
-                                }
-                                ?>
-                            </select>
-                        </label>
-                    </div>
-                    <div class="field-group">
-                        <label>
-                            <i class="fas fa-user"></i> Name Column:
-                            <select name="name_column">
-                                <option value="">None</option>
-                                <?php
-                                foreach($_SESSION['headers'] as $index => $header) {
-                                    echo "<option value='$index'>$header</option>";
-                                }
-                                ?>
-                            </select>
-                        </label>
-                    </div>
+            <!-- Previous Uploads -->
+            <div class="card previous-uploads">
+                <h2><i class="fas fa-history"></i> Previous Uploads</h2>
+                <div class="uploads-grid">
+                    <?php
+                    $uploads = glob('uploads/*_{*.csv,*.xlsx,*.xls}', GLOB_BRACE);
+                    foreach($uploads as $upload) {
+                        $filename = basename($upload);
+                        $timestamp = strtotime(explode('_', $filename)[0]);
+                        $original_name = implode('_', array_slice(explode('_', $filename), 1));
+                        echo "<div class='upload-card'>";
+                        echo "<div class='upload-icon'><i class='fas fa-file-alt'></i></div>";
+                        echo "<div class='upload-details'>";
+                        echo "<h3>$original_name</h3>";
+                        echo "<p>Uploaded: " . date('Y-m-d H:i', $timestamp) . "</p>";
+                        echo "<button class='use-file' onclick='useFile(\"$filename\")'>Use This File</button>";
+                        echo "</div>";
+                        echo "</div>";
+                    }
+                    ?>
                 </div>
+            </div>
 
-                <!-- Template Selection -->
-                <div class="template-section">
-                    <h2><i class="fas fa-file-code"></i> Email Template</h2>
-                    <div class="existing-templates-grid">
-                        <?php
-                        $templates = glob('templates/*.html');
-                        foreach($templates as $template) {
-                            $name = basename($template);
-                            $content = file_get_contents($template);
-                            echo "<div class='existing-template-card'>";
-                            echo "<div class='template-preview-header'>";
-                            echo "<h3>$name</h3>";
-                            echo "</div>";
-                            echo "<div class='template-preview-content'>";
-                            echo "<iframe srcdoc='" . htmlspecialchars($content, ENT_QUOTES) . "' 
-                                    style='width: 100%; height: 100%; border: none;'></iframe>";
-                            echo "</div>";
-                            echo "<div class='template-preview-actions'>";
-                            echo "<button class='use-template' onclick='selectTemplate(this.closest(\".existing-template-card\"), \"$name\")'>";
-                            echo "<i class='fas fa-check'></i> Use Template</button>";
-                            echo "<button class='edit-template' onclick='editTemplate(\"$name\", `" . htmlspecialchars($content, ENT_QUOTES) . "`)'>";
-                            echo "<i class='fas fa-edit'></i> Edit</button>";
-                            echo "</div>";
-                            echo "</div>";
-                        }
-                        ?>
-                        <div class="existing-template-card add-template" onclick="showNewTemplateModal()">
-                            <div class="add-template-content">
-                                <i class="fas fa-plus"></i>
-                                <div>Add New Template</div>
-                            </div>
+            <!-- Column Mapping Section -->
+            <?php if(isset($_SESSION['file_data'])): ?>
+            <div class="card mapping-section">
+                <h2><i class="fas fa-columns"></i> Map Columns</h2>
+                <form action="send_mail.php" method="post" id="emailForm">
+                    <div class="mapping-fields">
+                        <div class="field-group">
+                            <label>
+                                <i class="fas fa-envelope"></i> Email Column:
+                                <select name="email_column" required>
+                                    <?php
+                                    foreach($_SESSION['headers'] as $index => $header) {
+                                        echo "<option value='$index'>$header</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="field-group">
+                            <label>
+                                <i class="fas fa-user"></i> Name Column:
+                                <select name="name_column">
+                                    <option value="">None</option>
+                                    <?php
+                                    foreach($_SESSION['headers'] as $index => $header) {
+                                        echo "<option value='$index'>$header</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </label>
                         </div>
                     </div>
-                    <input type="hidden" name="template" id="selected-template" required>
-                </div>
 
-                <!-- Sending Pattern -->
-                <div class="pattern-section">
-                    <h2><i class="fas fa-clock"></i> Sending Pattern</h2>
-                    <div class="field-group">
-                        <label>
-                            <i class="fas fa-hourglass-half"></i> Interval between emails (minutes):
-                            <input type="number" name="interval" min="1" value="5">
-                        </label>
+                    <!-- Template Selection -->
+                    <div class="template-section">
+                        <h2><i class="fas fa-file-code"></i> Email Template</h2>
+                        <div class="existing-templates-grid">
+                            <?php
+                            $stmt = $pdo->prepare("SELECT name, content FROM templates WHERE user_id = ?");
+                            $stmt->execute([$_SESSION['user_id']]);
+                            $templates = $stmt->fetchAll();
+
+                            foreach($templates as $template) {
+                                echo "<div class='existing-template-card'>";
+                                echo "<div class='template-preview-header'>";
+                                echo "<h3>" . htmlspecialchars($template['name']) . "</h3>";
+                                echo "</div>";
+                                echo "<div class='template-preview-content'>";
+                                echo "<iframe srcdoc='" . htmlspecialchars($template['content'], ENT_QUOTES) . "' 
+                                        style='width: 100%; height: 100%; border: none;'></iframe>";
+                                echo "</div>";
+                                echo "<div class='template-preview-actions'>";
+                                echo "<button class='use-template' onclick='selectTemplate(this.closest(\".existing-template-card\"), \"" . htmlspecialchars($template['name']) . "\")'>";
+                                echo "<i class='fas fa-check'></i> Use Template</button>";
+                                echo "<button class='edit-template' onclick='editTemplate(\"" . htmlspecialchars($template['name']) . "\", `" . htmlspecialchars($template['content'], ENT_QUOTES) . "`)'>";
+                                echo "<i class='fas fa-edit'></i> Edit</button>";
+                                echo "</div>";
+                                echo "</div>";
+                            }
+                            ?>
+                            <div class="existing-template-card add-template" onclick="showNewTemplateModal()">
+                                <div class="add-template-content">
+                                    <i class="fas fa-plus"></i>
+                                    <div>Add New Template</div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" name="template" id="selected-template" required>
                     </div>
-                </div>
 
-                <div class="action-buttons">
-                    <button type="button" class="preview-button" onclick="previewEmail()">
-                        <i class="fas fa-eye"></i> Preview
-                    </button>
-                    <button type="submit" class="send-button">
-                        <i class="fas fa-paper-plane"></i> Start Sending
-                    </button>
-                </div>
-            </form>
+                    <!-- Sending Pattern -->
+                    <div class="pattern-section">
+                        <h2><i class="fas fa-clock"></i> Sending Pattern</h2>
+                        <div class="field-group">
+                            <label>
+                                <i class="fas fa-hourglass-half"></i> Interval between emails (minutes):
+                                <input type="number" name="interval" min="1" value="5">
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="button" class="preview-button" onclick="previewEmail()">
+                            <i class="fas fa-eye"></i> Preview
+                        </button>
+                        <button type="submit" class="send-button">
+                            <i class="fas fa-paper-plane"></i> Start Sending
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <?php endif; ?>
         </div>
-        <?php endif; ?>
     </div>
 
     <!-- Preview Modal -->

@@ -1,8 +1,24 @@
 <?php
+session_start();
+require_once '../config/database.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../login.php');
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['template_content'])) {
         $template_name = $_POST['template_name'];
-        file_put_contents("$template_name.html", $_POST['template_content']);
+        $content = $_POST['template_content'];
+        $user_id = $_SESSION['user_id'];
+
+        $stmt = $pdo->prepare("INSERT INTO templates (user_id, name, content) VALUES (?, ?, ?) 
+                              ON DUPLICATE KEY UPDATE content = ?");
+        $stmt->execute([$user_id, $template_name, $content, $content]);
+        
+        header('Location: ../index.php');
+        exit;
     }
 }
 ?>
