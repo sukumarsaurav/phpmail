@@ -228,20 +228,78 @@ tr:hover {
     background: white;
     padding: 2.5rem;
     border-radius: 16px;
-    box-shadow: var(--shadow-lg);
-}
-
-.auth-box h1 {
-    text-align: center;
-    color: var(--dark-color);
-    margin-bottom: 0.5rem;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 .auth-box h2 {
+    color: #2c3e50;
     text-align: center;
-    color: var(--secondary-color);
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    color: #4a5568;
     font-weight: 500;
+}
+
+.form-group input {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+.auth-button {
+    background: #007bff;
+    color: white;
+ 
+
+.auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.auth-links a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s ease;
+}
+
+.auth-links a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}   padding: 0.875rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin-top: 0.5rem;
+}
+
+.auth-button:hover {
+    background: #0056b3;
 }
 
 /* File Upload Styles */
@@ -411,4 +469,4 @@ input[type="file"] {
 
 .close:hover {
     color: var(--danger-color);
-} 
+}
