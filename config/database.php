@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';
-$dbname = 'bulk_email_system';
-$username = 'your_username';
-$password = 'your_password';
+$dbname = 'u911550082_phpmail';
+$username = 'u911550082_phpadmin';
+$password = 'O7+h0Ub?';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
